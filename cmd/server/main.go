@@ -1,0 +1,3 @@
+package main
+import("database/sql";"log";"net/http";"os";_ "modernc.org/sqlite")
+func main(){p:=os.Getenv("DB_PATH");if p==""{p="data/app.db"};os.MkdirAll("data",0755);db,e:=sql.Open("sqlite",p);if e!=nil{log.Fatal(e)};defer db.Close();db.Exec(`create table if not exists submissions(id integer primary key,teacher text,stage text)`);http.HandleFunc("/submissions",func(w http.ResponseWriter,r *http.Request){if r.Method=="POST"{w.WriteHeader(201);db.Exec("insert into submissions(teacher,stage) values('unknown','received')");return};rows,_:=db.Query("select teacher,stage from submissions");defer rows.Close();for rows.Next(){var t,s string;rows.Scan(&t,&s);w.Write([]byte(t+":"+s+"\n"))}});log.Fatal(http.ListenAndServe(":8080",nil))}
